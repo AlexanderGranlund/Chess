@@ -1,7 +1,21 @@
+use crate::clear_terminal;
 use crate::piece::Piece; 
+use crate::logic::Logic;
 
 
-pub fn print_board_in_terminal(board: [Piece;64], rev: bool){
+/*
+// Set background to red and write text
+        stdout.set_color(ColorSpec::new().set_bg(Some(Color::Red)))?;
+        write!(&mut stdout, "This is red background")?;
+
+        // Reset to default color
+        stdout.reset()?;
+        writeln!(&mut stdout, " Back to normal")?;
+*/
+
+
+pub fn print_board_in_terminal(logic: &Logic){
+    clear_terminal();
     let chess_pieces = [
     '\u{2654}', // White King    0
     '\u{2655}', // White Queen   1
@@ -17,36 +31,36 @@ pub fn print_board_in_terminal(board: [Piece;64], rev: bool){
     '\u{265F}', // Black Pawn    11
 ];
     let mut count = 0;
-    if rev{
-        for piece in board.iter().rev(){
+    if logic.whites_turn{
+        for piece in logic.board.iter().rev(){
             if count % 8 == 0 {
                 println!("");
             }
             match piece {
-                Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces),
-                Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces),
-                Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces),
-                Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces),
-                Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces),
-                Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces),       
-                Piece::Empty => print!("_"),
+                Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic.current_index),       
+                Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic.current_index),
                 _ => { println!("error")}
             }
             count += 1;
         }
     }   else{
-            for piece in board.iter(){
+            for piece in logic.board.iter(){
                 if count % 8 == 0 {
                     println!("");
                 }
                 match piece {
-                    Piece::Piece {piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces),
-                    Piece::Piece {piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces),
-                    Piece::Piece {piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces),
-                    Piece::Piece {piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces),
-                    Piece::Piece {piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces),
-                    Piece::Piece {piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces),
-                    Piece::Empty => println!("_"),
+                    Piece::Piece {piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic.current_index),
+                    Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic.current_index),
                     _ => { println!("error")}
                 }
                 count += 1;
@@ -54,49 +68,134 @@ pub fn print_board_in_terminal(board: [Piece;64], rev: bool){
     }
 }
 
-pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12]) {
+
+pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12], current_index: usize) {
     match piece {
-        Piece::Piece { white,..} if type_of_piece == 0 => {
+        Piece::Piece { white, position,..} if type_of_piece == 0 => {
             if white {
-                print!("{}", chess_pieces[5]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[5]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[5]);
+                }
+                
+
             } else {
-                print!("{}", chess_pieces[11]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[11]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[11]);
+                }
+               
             }
         }
-        Piece::Piece { white ,..} if type_of_piece == 1 || type_of_piece == 5 => {
+        Piece::Piece { white, position ,..} if type_of_piece == 1 || type_of_piece == 5 => {
             if white {
-                print!("{}", chess_pieces[2]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[2]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[2]);
+                }
+                
             } else {
-                print!("{}", chess_pieces[8]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[8]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[8]);
+                }
+                
             }
         }
-        Piece::Piece { white,.. } if type_of_piece == 2 => {
+        Piece::Piece { white, position,.. } if type_of_piece == 2 => {
             if white {
-                print!("{}", chess_pieces[4]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[4]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[4]);
+                }
+               
             } else {
-                print!("{}", chess_pieces[10]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[10]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[10]);
+                }
+            
             }
         }
-        Piece::Piece { white ,..} if type_of_piece == 3 => {
+        Piece::Piece { white, position ,..} if type_of_piece == 3 => {
             if white {
-                print!("{}", chess_pieces[3]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[3]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[3]);
+                }
+             
             } else {
-                print!("{}", chess_pieces[9]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[9]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[9]);
+                }
+                
             }
         }
-        Piece::Piece { white ,..} if type_of_piece == 4 => {
+        Piece::Piece { white, position ,..} if type_of_piece == 4 => {
             if white {
-                print!("{}", chess_pieces[1]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[1]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[1]);
+                }
+            
             } else {
-                print!("{}", chess_pieces[7]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[7]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[7]);
+                }
+               
             }
         }
-        Piece::Piece { white ,..} if type_of_piece == 5 => {
+        Piece::Piece { white, position ,..} if type_of_piece == 5 => {
             if white {
-                print!("{}", chess_pieces[0]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[0]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[0]);
+                }
+            
             } else {
-                print!("{}", chess_pieces[6]);
+                if position == current_index{
+                    print!("\x1b[41m {} \x1b[0m", chess_pieces[6]);
+                }
+                else {
+                    print!(" {} ", chess_pieces[6]);
+                }
+                
             }
+        }
+        Piece::Empty {position ,..} if type_of_piece == 6 => {
+            
+                if position == current_index{
+                    print!("\x1b[41m _ \x1b[0m");
+                }
+                else {
+                    print!(" _ ");
+                }
+            
+            
         }
         _ => {
             println!("Unknown piece type or type_of_piece does not match any variant.");

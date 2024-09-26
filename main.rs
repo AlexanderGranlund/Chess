@@ -15,14 +15,17 @@ mod input;
 
 
 fn main(){
+    let mut logic = Logic::new();
     while true {
-        std::thread::sleep(std::time::Duration::from_secs(2));
-        //clear_terminal(); 
-        let mut logic = Logic::new();
-        print_board_in_terminal(logic.board, true);
-        //Logic::view_core_moves(logic.core_moves);
-        match_input(get_input(), logic.has_selected); 
+        //std::thread::sleep(std::time::Duration::from_secs(2));
         
+        //clear_terminal(); 
+        print_board_in_terminal(&logic);
+        //Logic::view_core_moves(logic.core_moves);
+        //println!("index enter: {}", logic.current_index);
+        logic.do_action(match_input(get_input(), logic.has_selected));
+        //println!("index enter: {}", logic.current_index);
+        //do_action(&mut self, piece: Piece,  action: usize)
     }
 }
 

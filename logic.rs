@@ -1,7 +1,7 @@
 use crate::piece::Piece;
 use crate::piece::get_core_moves;
 
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
 pub struct Logic{
     height: usize,
@@ -10,9 +10,10 @@ pub struct Logic{
     pub board: [Piece;64],
     current_move: [usize;2],
     pub core_moves: Vec<Vec<usize>>,
-    whites_turn: bool,
-    selected_index: usize,
+    pub whites_turn: bool,
+    pub current_index: usize,
     pub has_selected: bool,
+    pub selected_index: usize,
 
 }
 
@@ -26,14 +27,22 @@ impl Logic {
             current_move: [0;2],
             core_moves: get_core_moves(),
             whites_turn: true,
-            selected_index: 0,
+            current_index: 7,
             has_selected: false,
+            selected_index: 100,
         }
     }
     pub fn increment_moves(&mut self){
-        self.selected_index = 0;
         self.has_selected = false;
         self.moves += 1;
+        if self.moves % 2 == 0{
+            self.current_index = 7;
+            self.whites_turn = true;
+        } 
+        else{
+            self.current_index = 55;
+            self.whites_turn = false;
+        }
     }
 
     pub fn view_core_moves(moves: Vec<Vec<usize>>){
@@ -44,35 +53,54 @@ impl Logic {
     }
 
 
-    fn select_new_piece(&mut self, direction: usize){
-        match direction {
-            1 => {if self.selected_index + 8 < 64{
-                        self.selected_index += 8;
+    pub fn select_new_piece(&mut self, direction: usize){
+        //println!("index enter: {}", self.current_index);
+        if self.whites_turn{
+            match direction {
+            //forward
+            1 => {if self.current_index + 8 < 64{
+                        self.current_index += 8;
             }},
-            2 =>   {if (self.selected_index - 1) % 7 != 0{
-                self.selected_index -= 1;
+            //left
+            2 =>   {if (self.current_index + 1) % 8 != 0{
+                self.current_index += 1;
             }},
-            3 =>  {if (self.selected_index + 1) % 8 != 0{
-                self.selected_index += 1;
+            //right
+            3 =>  {if (self.current_index - 1) % 8 != 0{
+                self.current_index -= 1;
             }},
-            4 =>  {if self.selected_index - 8 >= 0{
-                self.selected_index -= 8;
+            //backward
+            4 =>  {if !(self.current_index < 8) {
+                self.current_index -= 8;
             }},
             _ => println!("_"),
-        }    
-    }}
+            }   
+        } else{
+            match direction {
+                //backward
+                4 => {if self.current_index + 8 < 64{
+                            self.current_index += 8;
+                }},
+                //right
+                3 =>   {if (self.current_index + 1) % 8 != 0{
+                    self.current_index += 1;
+                }},
+                //left
+                2 =>  {if (self.current_index - 1) % 8 != 0{
+                    self.current_index -= 1;
+                }},
+                //forward
+                1 =>  {if !(self.current_index < 8){
+                    self.current_index -= 8;
+                }},
+                _ => println!("_"),
+                }   
+        }
+        //println!("index leave: {}", self.current_index);
+        
+    }
 
-    /*
-     forward    =>  action = 1,
-    left        =>   action = 2,
-    right       =>  action = 3,
-    backward    =>  action = 3,
-    forward_left_diagonal   =>  action = 4,
-    forward_right_diagonal  =>  action = 5,
-    backward_left_diagonal  =>  action = 6,
-    backward_right_diagonal =>  action = 7,
-     */
-    pub fn do_action(piece: Piece,  action: usize){
+    pub fn do_action(&mut self,  action: usize){
         match action {
             1 =>  println!("{} <- this is the action", action),
             2 =>   println!("{} <- this is the action", action),
@@ -82,14 +110,16 @@ impl Logic {
             6 =>  println!("{} <- this is the action", action),
             7 =>  println!("{} <- this is the action", action),
             8 =>  println!("{} <- this is the action", action),
-            9 =>  println!("{} <- this is the action", action),
-            10 =>  println!("{} <- this is the action", action),
-            11 =>  println!("{} <- this is the action", action),
-            12 =>  println!("{} <- this is the action", action),
+            9 =>    self.select_new_piece(1), //w
+            10 =>   self.select_new_piece(2), //a
+            11 =>   self.select_new_piece(3), //d
+            12 =>   self.select_new_piece(4), //s
+            13 =>  println!("{} <- this is the action", action),
             _ => println!("_"),
         }    
-        
     }
+
+}
 
 
 pub fn is_valid_move(board: &[Option<Piece>;64], current_move: [usize;2]) -> bool{
@@ -97,7 +127,10 @@ pub fn is_valid_move(board: &[Option<Piece>;64], current_move: [usize;2]) -> boo
 }
 
 fn create_starting_board() -> [Piece;64]{
-    let mut board: [Piece;64] = [Piece::Empty;64];
+    let mut board: [Piece;64] = [Piece::Start;64];
+    for i in 0..64{
+        board[i] = Piece::Empty { position: i};
+    }
     //white pawns
     for i in 0..8{
         board[i+8] = Piece::Piece {piece_type: 1, white: true, position: (i+8), has_moved: false};
@@ -144,4 +177,6 @@ fn create_starting_board() -> [Piece;64]{
 
     return board;
 }
+
+
 

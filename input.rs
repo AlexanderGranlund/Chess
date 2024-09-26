@@ -8,13 +8,15 @@ use crate:: logic::Logic;
 
 
 pub fn get_input()-> String{
-    println!("\nPlease enter some input:");
+    //println!("\nPlease enter some input:");
+    println!("\n");
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
         .expect("Failed to read line");
-    println!("You entered: {}", input.trim());
-    return input.trim().to_string();
+    input = input.trim().to_string();
+    //println!("You entered: {}", input);
+    return input;
 }
 
 
@@ -25,40 +27,34 @@ pub fn match_input(input: String, has_selected: bool) -> usize{
     //see if piece has been selected 
     if has_selected {
         println!("{} before matched", action);
-        match input.as_str(){
-            "w" => action = 1,
-            "a" => action = 2,
-            "d" => action = 3,
-            "s" => action = 4,
-            "q" => action = 5,
-            "e" => action = 6,
-            "z" => action = 7,
-            "x" => action = 8,
-            _ => println!("_"),
+        action = match input.as_str(){
+            "w" => 1,
+            "a" => 2,
+            "d" => 3,
+            "s" => 4,
+            "q" => 5,
+            "e" => 6,
+            "z" => 7,
+            "x" => 8,
+            _ => 200,
         }
     }   else {
-            match input.as_str(){
-                "w" => action = 9,
-                "a" => action = 10,
-                "d" => action = 11,
-                "e" => action = 12,
-                _ => println!("_"),
+            action = match input.as_str(){
+                "w" => 9,
+                "a" => 10,
+                "d" => 11,
+                "s" => 12,
+                "e" => 13,
+                _ => 200,
             }
     }
 
-    match action {
-        1 =>  println!("{} <- this is the action", action),
-        2 =>   println!("{} <- this is the action", action),
-        3 =>  println!("{} <- this is the action", action),
-        4 =>  println!("{} <- this is the action", action),
-        5 =>  println!("{} <- this is the action", action),
-        6 =>  println!("{} <- this is the action", action),
-        7 =>  println!("{} <- this is the action", action),
-        8 =>  println!("{} <- this is the action", action),
-        _ => println!("_"),
-    }    
     action
 }
+
+
+
+
 
 
 

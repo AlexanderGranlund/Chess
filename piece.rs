@@ -71,7 +71,10 @@ pub enum Piece {
         position: usize,
         has_moved: bool,
     },
-    Empty,
+    Empty{
+        position: usize,
+    },
+    Start,
 }
 
 
