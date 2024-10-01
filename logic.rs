@@ -131,6 +131,11 @@ impl Logic {
         }
         else{
             //check if white, so cant select black
+            if let Piece::Piece { white, .. } = self.board[self.current_index] {
+                if (!white && self.whites_turn) || (white && !self.whites_turn) {
+                    return;
+                }
+            }
             let is_piece = match self.board[self.current_index] {
                 Piece::Empty { .. } => false,
                 _ => true,
