@@ -21,7 +21,8 @@ fn main(){
         
         //clear_terminal(); 
         print_board_in_terminal(&logic);
-        //Logic::view_core_moves(logic.core_moves);
+        print!("\n\nmoves: {}", logic.moves);
+        //Logic::view_core_moves(&logic.core_moves);
         //println!("index enter: {}", logic.current_index);
         logic.do_action(match_input(get_input(), logic.has_selected));
         //println!("index enter: {}", logic.current_index);

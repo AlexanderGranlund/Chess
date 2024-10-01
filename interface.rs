@@ -37,13 +37,13 @@ pub fn print_board_in_terminal(logic: &Logic){
                 println!("");
             }
             match piece {
-                Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic.current_index),
-                Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic.current_index),
-                Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic.current_index),
-                Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic.current_index),
-                Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic.current_index),
-                Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic.current_index),       
-                Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic.current_index),
+                Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic),
+                Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic),
+                Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic),
+                Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic),
+                Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic),
+                Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic),       
+                Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic),
                 _ => { println!("error")}
             }
             count += 1;
@@ -54,13 +54,13 @@ pub fn print_board_in_terminal(logic: &Logic){
                     println!("");
                 }
                 match piece {
-                    Piece::Piece {piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic.current_index),
-                    Piece::Piece {piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic.current_index),
-                    Piece::Piece {piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic.current_index),
-                    Piece::Piece {piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic.current_index),
-                    Piece::Piece {piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic.current_index),
-                    Piece::Piece {piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic.current_index),
-                    Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic.current_index),
+                    Piece::Piece {piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic),
+                    Piece::Piece {piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic),
+                    Piece::Piece {piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic),
+                    Piece::Piece {piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic),
+                    Piece::Piece {piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic),
+                    Piece::Piece {piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic),
+                    Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic),
                     _ => { println!("error")}
                 }
                 count += 1;
@@ -69,11 +69,17 @@ pub fn print_board_in_terminal(logic: &Logic){
 }
 
 
-pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12], current_index: usize) {
+pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12], logic: &Logic) {
     match piece {
         Piece::Piece { white, position,..} if type_of_piece == 0 => {
             if white {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[5]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[5])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[5]);
                 }
                 else {
@@ -82,18 +88,33 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 
 
             } else {
-                if position == current_index{
+                
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[11]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[11])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[11]);
                 }
                 else {
                     print!(" {} ", chess_pieces[11]);
                 }
-               
+                
+             
             }
         }
-        Piece::Piece { white, position ,..} if type_of_piece == 1 || type_of_piece == 5 => {
+        Piece::Piece { white, position ,..} if type_of_piece == 1 || type_of_piece == 1 => {
             if white {
-                if position == current_index{
+                
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[2]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[2])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[2]);
                 }
                 else {
@@ -101,7 +122,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 }
                 
             } else {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[8]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[8])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[8]);
                 }
                 else {
@@ -112,7 +139,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
         }
         Piece::Piece { white, position,.. } if type_of_piece == 2 => {
             if white {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[4]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[4])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[4]);
                 }
                 else {
@@ -120,7 +153,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 }
                
             } else {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[10]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[10])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[10]);
                 }
                 else {
@@ -131,7 +170,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
         }
         Piece::Piece { white, position ,..} if type_of_piece == 3 => {
             if white {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[3]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[3])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[3]);
                 }
                 else {
@@ -139,7 +184,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 }
              
             } else {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[9]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[9])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[9]);
                 }
                 else {
@@ -150,7 +201,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
         }
         Piece::Piece { white, position ,..} if type_of_piece == 4 => {
             if white {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[1]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[1])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[1]);
                 }
                 else {
@@ -158,7 +215,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 }
             
             } else {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[7]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[7])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[7]);
                 }
                 else {
@@ -169,7 +232,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
         }
         Piece::Piece { white, position ,..} if type_of_piece == 5 => {
             if white {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[0]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[0])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[0]);
                 }
                 else {
@@ -177,7 +246,13 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
                 }
             
             } else {
-                if position == current_index{
+                if position == logic.current_index && logic.has_selected && logic.current_index != logic.selected_index{
+                    print!("\x1b[42m {} \x1b[0m", chess_pieces[6]);
+                }
+                else if position == logic.selected_index{
+                    print!("\x1b[44m {} \x1b[0m", chess_pieces[6])
+                }
+                else if position == logic.current_index{
                     print!("\x1b[41m {} \x1b[0m", chess_pieces[6]);
                 }
                 else {
@@ -188,7 +263,7 @@ pub fn print_piece(piece: Piece, type_of_piece: usize, chess_pieces: [char; 12],
         }
         Piece::Empty {position ,..} if type_of_piece == 6 => {
             
-                if position == current_index{
+                if position == logic.current_index{
                     print!("\x1b[41m _ \x1b[0m");
                 }
                 else {
