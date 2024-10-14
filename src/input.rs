@@ -7,6 +7,10 @@ use crate::interface::print_piece;
 use crate:: logic::Logic;
 
 
+fn remove_empty_strings(vec: &mut Vec<String>) {
+    vec.retain(|s| !s.is_empty());
+}
+
 pub fn get_input()-> Vec<String>{
     //println!("\nPlease enter some input:");
     println!("\n");
@@ -16,8 +20,9 @@ pub fn get_input()-> Vec<String>{
         .expect("Failed to read line");
    
     let input_vec_str: Vec<char> = input.trim().chars().collect();
-    let input_vec: Vec<String> = input_vec_str.iter().map(|&s| s.to_string()).collect();
+    let mut input_vec: Vec<String> = input_vec_str.iter().map(|&s| s.to_string()).collect();
     //println!("You entered: {}", input);
+    remove_empty_strings(&mut input_vec);
     println!("input vector: {:?}", input_vec);
     return input_vec;
 }
@@ -25,11 +30,7 @@ pub fn get_input()-> Vec<String>{
 
 pub fn match_input(input: String) -> usize{
 
-    let mut action: usize = 0;
-
-    //see if piece has been selected 
-        println!("input is::");
-        println!("{}", input);
+    let action: usize;
         
         action = match input.as_str(){
             "w" => 1, 

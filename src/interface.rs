@@ -1,7 +1,8 @@
 
 use crate::piece::Piece; 
 use crate::logic::Logic;
-use std::io::{self, Write};
+//use std::io::{self, Write};
+use std::process::Command;
 
 
 /*
@@ -15,14 +16,26 @@ use std::io::{self, Write};
     println!("\x1b[40m Black Background \x1b[0m");
 */
 
+/*
 fn clear_terminal() {
     print!("\x1B[2J\x1B[1;1H");
     io::stdout().flush().unwrap();
 }
+ */
+
+
+
+
+fn clear_terminal() {
+    let _ = Command::new("clear").status(); // For Unix-based systems
+    // For Windows, use:
+    // let _ = Command::new("cmd").args(&["/C", "cls"]).status();
+}
+
 
 
 pub fn print_board_in_terminal(logic: &Logic){
-    //clear_terminal();
+    clear_terminal();
     let chess_pieces = [
     '\u{2654}', // White King    0
     '\u{2655}', // White Queen   1
@@ -38,41 +51,33 @@ pub fn print_board_in_terminal(logic: &Logic){
     '\u{265F}', // Black Pawn    11
 ];
     let mut count = 0;
-    if logic.whites_turn{
-        for piece in logic.board.iter().rev(){
-            if count % 8 == 0 {
-                println!("");
-            }
-            match piece {
-                Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic),
-                Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic),
-                Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic),
-                Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic),
-                Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic),
-                Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic),       
-                Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic),
-                _ => { println!("error")}
-            }
-            count += 1;
+
+    // Create a single iterator and reverse it conditionally
+    let board_iter: Box<dyn Iterator<Item = &Piece>> = if logic.whites_turn {
+        Box::new(logic.board.iter().rev()) // Reverse for White's turn
+    } else {
+        Box::new(logic.board.iter()) // Normal order for Black's turn
+    };
+
+
+    for piece in board_iter {
+        if count % 8 == 0 {
+            println!("");
         }
-    }   else{
-            for piece in logic.board.iter(){
-                if count % 8 == 0 {
-                    println!("");
-                }
-                match piece {
-                    Piece::Piece {piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic),
-                    Piece::Piece {piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic),
-                    Piece::Piece {piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic),
-                    Piece::Piece {piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic),
-                    Piece::Piece {piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic),
-                    Piece::Piece {piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic),
-                    Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic),
-                    _ => { println!("error")}
-                }
-                count += 1;
-            }
+
+        match piece {
+            Piece::Piece { piece_type: 1, .. } => print_piece(*piece, 0, chess_pieces, logic),
+            Piece::Piece { piece_type: 2, .. } => print_piece(*piece, 1, chess_pieces, logic),
+            Piece::Piece { piece_type: 3, .. } => print_piece(*piece, 2, chess_pieces, logic),
+            Piece::Piece { piece_type: 4, .. } => print_piece(*piece, 3, chess_pieces, logic),
+            Piece::Piece { piece_type: 5, .. } => print_piece(*piece, 4, chess_pieces, logic),
+            Piece::Piece { piece_type: 6, .. } => print_piece(*piece, 5, chess_pieces, logic),       
+            Piece::Empty{position:_} => print_piece(*piece, 6, chess_pieces, logic),
+            _ => { println!("error")}
+        }
+        count += 1;
     }
+    
 }
 
 

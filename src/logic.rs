@@ -100,7 +100,7 @@ impl Logic {
                 self.current_index -= 1;
             }},
             //backward
-            4 =>  {if !(self.current_index < 8) {
+            4 =>  {if (self.current_index >= 8) {
                 self.current_index -= 8;
             }},
             _ => println!("direction is: {}", direction),
@@ -120,7 +120,7 @@ impl Logic {
                     self.current_index -= 1;
                 }},
                 //forward
-                1 =>  {if !(self.current_index < 8){
+                1 =>  {if (self.current_index >= 8){
                     self.current_index -= 8;
                 }},
                 _ => println!("direction is: {}", direction),
@@ -153,7 +153,7 @@ impl Logic {
             }
             
         }
-        else if !((!is_white && self.whites_turn) || (is_white && !self.whites_turn)) && is_piece{
+        else if !((!is_white && self.whites_turn) || (is_white && !self.whites_turn)) && is_piece && self.valid_moves.len() > 0{
             self.selected_index = self.current_index;
             self.has_selected = true;
             self.get_valid_moves();
@@ -175,9 +175,7 @@ impl Logic {
         if let Piece::Piece { white, .. } = self.board[index] {
             return white;
         }
-        else {
-            print!("is_white() was used on a non piece");
-        }
+        
         return false;
 
     }
@@ -186,9 +184,7 @@ impl Logic {
         if let Piece::Piece { has_moved, .. } = self.board[index] {
             return has_moved;
         }
-        else {
-            print!("has_moved() was used on a non piece");
-        }
+        
         return false;
 
     }
@@ -327,16 +323,459 @@ impl Logic {
         }
         
     }
+
+
     pub fn valid_moves_rook(&mut self){
-       
+
+        let index:usize;
+        if self.has_selected{
+            index = self.selected_index;
+            
+        }
+        else{
+            index = self.current_index;
+        }
+
+        let mut stop_north = false;
+        let mut stop_west = false;
+        let mut stop_east = false;
+        let mut stop_south = false;
+        let row = index/8;
+
+        for i in 1..8{
+            if self.whites_turn && self.is_white(index){
+
+                if !stop_north && (index + i*8) < 64{
+                    let is_piece: bool = self.is_piece(index + i*8);
+                    let is_white: bool = self.is_white(index + i*8);
+                    if is_piece && is_white{
+                        stop_north = true;
+                    }
+                    else{
+                        self.valid_moves.push(index +i*8);
+                        if is_piece{
+                            stop_north = true;
+                        }
+                        
+                    }
+                }
+                if !stop_west && (index + i) / 8 == row && (index + i) < 64{
+                    let is_piece: bool = self.is_piece(index + i);
+                    let is_white: bool = self.is_white(index + i);
+                    if is_piece && is_white{
+                        stop_west = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i);
+                        if is_piece{
+                            stop_west = true;
+                        }
+                    }
+                }
+                if !stop_east && index >= i && (index - i) / 8 == row {
+                    let is_piece: bool = self.is_piece(index - i);
+                    let is_white: bool = self.is_white(index - i);
+                    if is_piece && is_white{
+                        stop_east = true;
+                        
+                    }
+                    else{
+                        self.valid_moves.push(index - i);
+                        if is_piece{
+                            stop_east = true;
+                        }
+                    }
+                }
+                if !stop_south && index >i*8{
+                    let is_piece: bool = self.is_piece(index - i*8);
+                    let is_white: bool = self.is_white(index - i*8);
+                    if is_piece && is_white{
+                        stop_south = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*8);
+                        if is_piece{
+                            stop_south = true;
+                        }
+                    }
+                }
+
+            } else if !self.whites_turn && !self.is_white(index){
+                
+                if !stop_north && (index > i*8){
+                    let is_piece: bool = self.is_piece(index - i*8);
+                    let is_white: bool = self.is_white(index - i*8);
+                    if is_piece && !is_white{
+                        stop_north = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*8);
+                        if is_piece{
+                            stop_north = true;
+                        }
+                    }
+                }
+                if !stop_west && index >= i && (index - i) / 8 == row {
+                    let is_piece: bool = self.is_piece(index - i);
+                    let is_white: bool = self.is_white(index - i);
+                    if is_piece && !is_white{
+                        stop_west = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i);
+                        if is_piece{
+                            stop_west = true;
+                        }
+                    }
+                }
+                if !stop_east && (index + i) / 8 == row && (index + i) < 64{
+                    let is_piece: bool = self.is_piece(index + i);
+                    let is_white: bool = self.is_white(index + i);
+                    if is_piece && !is_white{
+                        stop_east = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i);
+                        if is_piece{
+                            stop_east = true;
+                        }
+                    }
+                }
+                if !stop_south && (index + i*8) < 64{
+                    let is_piece: bool = self.is_piece(index + i*8);
+                    let is_white: bool = self.is_white(index + i*8);
+                    if is_piece && !is_white{
+                        stop_south = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i*8);
+                        if is_piece{
+                            stop_south = true;
+                        }
+                    }
+                }
+            }
+            
+            
+        }
+
     
     }
     pub fn valid_moves_knight(&mut self){
+        let index:usize;
+        if self.has_selected{
+            index = self.selected_index;
+            
+        }
+        else{
+            index = self.current_index;
+        }
        
+        if self.whites_turn && self.is_white(index){
+            if (index + 15) < 64 && index % 8 != 0{
+                let is_white: bool = self.is_white(index + 15);
     
+                if !is_white{
+                    self.valid_moves.push(index + 15);
+                }
+            }
+    
+            if (index + 17) < 64 && index % 8 != 7{
+                let is_white: bool = self.is_white(index + 17);
+                
+                if !is_white{
+                    self.valid_moves.push(index + 17);
+                }
+            }
+    
+            if (index + 6) < 64 && index % 8 != 0 && index % 8 != 1 {
+                let is_white: bool = self.is_white(index + 6);
+    
+                if !is_white{
+                    self.valid_moves.push(index + 6);
+                }
+            }
+    
+            if (index + 10) < 64 && index % 8 != 7 && index % 8 != 6{
+                let is_white: bool = self.is_white(index + 10);
+    
+                if !is_white{
+                    self.valid_moves.push(index + 10);
+                }
+            }
+    
+            if (index > 17) && index % 8 != 0{
+                let is_white: bool = self.is_white(index - 17);
+                
+                if !is_white{
+                    self.valid_moves.push(index - 17);
+                }
+            }
+    
+            if (index > 15) && index % 8 != 7{
+                let is_white: bool = self.is_white(index - 15);
+                
+                if !is_white{
+                    self.valid_moves.push(index - 15);
+                }
+            }
+            
+            if (index > 10) && index % 8 != 0 && index % 8 != 1{
+                let is_white: bool = self.is_white(index - 10);
+                
+                if !is_white{
+                    self.valid_moves.push(index - 10);
+                }
+            }
+    
+            if (index > 6) && index % 8 != 7 && index % 8 != 6{
+                let is_white: bool = self.is_white(index - 6);
+                
+                if !is_white{
+                    self.valid_moves.push(index - 6);
+                }
+            }
+        }
+        else if !self.whites_turn && !self.is_white(index){
+           
+            if (index + 15) < 64 && index % 8 != 0{
+                let is_white: bool = self.is_white(index + 15);
+                let is_piece: bool = self.is_piece(index + 15);
+    
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index + 15);
+                }
+            }
+    
+            if (index + 17) < 64 && index % 8 != 7{
+                let is_white: bool = self.is_white(index + 17);
+                let is_piece: bool = self.is_piece(index + 17);
+                
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index + 17);
+                }
+            }
+    
+            if (index + 6) < 64 && index % 8 != 0 && index % 8 != 1 {
+                let is_white: bool = self.is_white(index + 6);
+                let is_piece: bool = self.is_piece(index + 6);
+
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index + 6);
+                }
+            }
+    
+            if (index + 10) < 64 && index % 8 != 7 && index % 8 != 6{
+                let is_white: bool = self.is_white(index + 10);
+                let is_piece: bool = self.is_piece(index + 10);
+
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index + 10);
+                }
+            }
+    
+            if (index > 17) && index % 8 != 0{
+                let is_white: bool = self.is_white(index - 17);
+                let is_piece: bool = self.is_piece(index - 17);
+                
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index - 17);
+                }
+            }
+    
+            if (index > 15) && index % 8 != 7{
+                let is_white: bool = self.is_white(index - 15);
+                let is_piece: bool = self.is_piece(index - 15);
+                
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index - 15);
+                }
+            }
+            
+            if (index > 10) && index % 8 != 0 && index % 8 != 1{
+                let is_white: bool = self.is_white(index - 10);
+                let is_piece: bool = self.is_piece(index -10);
+                
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index - 10);
+                }
+            }
+    
+            if (index > 6) && index % 8 != 7 && index % 8 != 6{
+                let is_white: bool = self.is_white(index - 6);
+                let is_piece: bool = self.is_piece(index - 6);
+                
+                if !(is_piece && !is_white){
+                    self.valid_moves.push(index - 6);
+                }
+            }
+            
+        }
+       
     }
+
     pub fn valid_moves_bishop(&mut self){
        
+        let index:usize;
+        if self.has_selected{
+            index = self.selected_index;
+            
+        }
+        else{
+            index = self.current_index;
+        }
+
+        let mut stop_NE = false;
+        let mut stop_NW = false;
+        let mut stop_SE = false;
+        let mut stop_SW = false;
+
+        for i in 1..8{
+            if self.whites_turn && self.is_white(index){
+
+                if (index + i*7) > 63 || (index + i*7) % 8 == 7{
+                    stop_NE = true;
+                }
+                if !stop_NE{
+                    let is_piece: bool = self.is_piece(index + i*7);
+                    let is_white: bool = self.is_white(index + i*7);
+                    if is_piece && is_white{
+                        stop_NE = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i*7);
+                        if is_piece{
+                            stop_NE = true;
+                        }
+                        
+                    }
+                }
+                if (index + i*9) > 63 || (index + i*9) % 8 == 0{
+                    stop_NW = true;
+                }
+                if !stop_NW {
+                    let is_piece: bool = self.is_piece(index + i*9);
+                    let is_white: bool = self.is_white(index + i*9);
+                    if is_piece && is_white{
+                        stop_NW = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i*9);
+                        if is_piece{
+                            stop_NW = true;
+                        }
+                    }
+                }
+                if  (index < i*9)  || (index - i*9) % 8 == 7{
+                    stop_SE = true;
+                }
+                if !stop_SE {
+                    let is_piece: bool = self.is_piece(index - i*9);
+                    let is_white: bool = self.is_white(index - i*9);
+                    if is_piece && is_white{
+                        stop_SE = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*9);
+                        if is_piece{
+                            stop_SE = true;
+                        }
+                        
+                    }
+                }
+                if (index < i*7) || (index - i*7) % 8 == 0{
+                    stop_SW = true;
+                }
+                if !stop_SW{
+                    let is_piece: bool = self.is_piece(index - i*7);
+                    let is_white: bool = self.is_white(index - i*7);
+                    if is_piece && is_white{
+                        stop_SW = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*7);
+                        if is_piece{
+                            stop_SW = true;
+                        }
+                        
+                    }
+                }
+
+            } else if !self.whites_turn && !self.is_white(index){
+                
+                if (index < i*7) || (index - i*7) % 8 == 0{
+                    stop_NE = true;
+                }
+                if !stop_NE{
+                    let is_piece: bool = self.is_piece(index - i*7);
+                    let is_white: bool = self.is_white(index - i*7);
+                    if is_piece && !is_white{
+                        stop_NE = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*7);
+                        if is_piece{
+                            stop_NE = true;
+                        }
+                        
+                    }
+                }
+                if  (index < i*9)  || (index - i*9) % 8 == 7{
+                    stop_NW = true;
+                }
+                if !stop_NW {
+                    let is_piece: bool = self.is_piece(index - i*9);
+                    let is_white: bool = self.is_white(index - i*9);
+                    if is_piece && !is_white{
+                        stop_NW = true;
+                    }
+                    else{
+                        self.valid_moves.push(index - i*9);
+                        if is_piece{
+                            stop_NW = true;
+                        }
+                        
+                    }
+                }
+                if (index + i*9) > 63 || (index + i*9) % 8 == 0{
+                    stop_SE = true;
+                }
+                if !stop_SE {
+                    let is_piece: bool = self.is_piece(index + i*9);
+                    let is_white: bool = self.is_white(index + i*9);
+                    if is_piece && !is_white{
+                        stop_SE = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i*9);
+                        if is_piece{
+                            stop_SE = true;
+                        }
+                    }
+                }
+                if (index + i*7) > 63 || (index + i*7) % 8 == 7{
+                    stop_SW = true;
+                }
+                if !stop_SW{
+                    let is_piece: bool = self.is_piece(index + i*7);
+                    let is_white: bool = self.is_white(index + i*7);
+                    if is_piece && !is_white{
+                        stop_SW = true;
+                    }
+                    else{
+                        self.valid_moves.push(index + i*7);
+                        if is_piece{
+                            stop_SW = true;
+                        }
+                        
+                    }
+                }
+            }
+            
+            
+        }
+
+    
     
     }
     pub fn valid_moves_queen(&mut self){
