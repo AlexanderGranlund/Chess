@@ -1,6 +1,7 @@
 use std::io::empty;
 use std::ptr::null;
 
+use crate::piece;
 use crate::piece::get_core_moves;
 use crate::piece::Piece;
 
@@ -11,10 +12,13 @@ pub struct Logic {
     width: usize,
     pub moves: usize,
     pub board: [Piece; 64],
-    taken_white_pieces: [Piece; 16],
-    taken_black_pieces: [Piece; 16],
-    taken_white_pieces_num: usize,
-    taken_black_pieces_num: usize,
+    pub temp_board: [Piece; 64],
+    pub taken_white_pieces: Vec<usize>,
+    pub taken_black_pieces: Vec<usize>,
+    pub all_white_moves: Vec<usize>,
+    pub all_black_moves: Vec<usize>,
+    pub taken_white_pieces_num: usize,
+    pub taken_black_pieces_num: usize,
     current_move: [usize; 2],
     pub core_moves: Vec<Vec<usize>>,
     pub whites_turn: bool,
@@ -22,8 +26,11 @@ pub struct Logic {
     pub has_selected: bool,
     pub selected_index: usize,
     pub valid_moves: Vec<usize>,
-    white_in_check: bool,
-    black_in_check: bool,
+    pub temp_valid_moves: Vec<usize>,
+    pub white_king_position: usize,
+    pub black_king_position: usize,
+    pub white_in_check: bool,
+    pub black_in_check: bool,
 }
 
 impl Logic {
@@ -33,8 +40,11 @@ impl Logic {
             width: 8,
             moves: 0,
             board: create_starting_board(),
-            taken_white_pieces: [Piece::Empty { position: (0) }; 16],
-            taken_black_pieces: [Piece::Empty { position: (0) }; 16],
+            temp_board: create_starting_board(),
+            taken_white_pieces: vec![],
+            taken_black_pieces: vec![],
+            all_white_moves: vec![],
+            all_black_moves: vec![],
             taken_white_pieces_num: 0,
             taken_black_pieces_num: 0,
             current_move: [0; 2],
@@ -44,13 +54,16 @@ impl Logic {
             has_selected: false,
             selected_index: 100,
             valid_moves: vec![],
+            temp_valid_moves: vec![],
+            white_king_position: 3,
+            black_king_position: 59,
             white_in_check: false,
             black_in_check: false,
         }
     }
     pub fn increment_moves(&mut self) {
-        println!("\nfrom increment moves (1) ");
-        self.print_logic();
+        self.white_in_check = false;
+        self.black_in_check = false;
         self.has_selected = false;
         self.selected_index = 100;
         self.moves += 1;
@@ -61,9 +74,9 @@ impl Logic {
             self.current_index = 56;
             self.whites_turn = false;
         }
-        println!("\nfrom increment moves (2) ");
-        self.print_logic();
-        self.get_valid_moves();
+       
+        self.get_valid_moves(100);
+        self.clean_valid_moves();
     }
 
     pub fn view_core_moves(moves: &Vec<Vec<usize>>) {
@@ -140,7 +153,8 @@ impl Logic {
             }
         }
 
-        self.get_valid_moves();
+        self.get_valid_moves(100);
+        self.clean_valid_moves();
     }
 
     fn select_and_lock(&mut self) {
@@ -151,6 +165,28 @@ impl Logic {
                 return;
             }
             if self.valid_moves.contains(&self.current_index) {
+                if self.is_piece(self.current_index) {
+                    if self.is_white(self.current_index) {
+                        self.taken_white_pieces_num += 1;
+                        self.taken_white_pieces
+                            .push(self.piece_type(self.current_index));
+                        self.taken_white_pieces.sort();
+                    } else {
+                        self.taken_black_pieces_num += 1;
+                        self.taken_black_pieces
+                            .push(self.piece_type(self.current_index));
+                        self.taken_black_pieces.sort();
+                    }
+                }
+
+                if self.piece_type(self.selected_index) == 6 {
+                    if self.is_white(self.selected_index) {
+                        self.white_king_position = self.current_index;
+                    } else {
+                        self.black_king_position = self.current_index;
+                    }
+                }
+
                 self.board[self.current_index] = self.board[self.selected_index];
                 if let Piece::Piece {
                     ref mut position, ..
@@ -175,11 +211,12 @@ impl Logic {
         {
             self.selected_index = self.current_index;
             self.has_selected = true;
-            self.get_valid_moves();
+            self.get_valid_moves(100);
+            self.clean_valid_moves();
         }
     }
 
-    fn is_piece(&mut self, index: usize) -> bool {
+    fn is_piece(&self, index: usize) -> bool {
         let is_piece = match self.board[index] {
             Piece::Empty { .. } => false,
             Piece::Start => false,
@@ -187,7 +224,7 @@ impl Logic {
         };
         return is_piece;
     }
-    fn is_white(&mut self, index: usize) -> bool {
+    fn is_white(&self, index: usize) -> bool {
         if let Piece::Piece { white, .. } = self.board[index] {
             return white;
         }
@@ -195,7 +232,16 @@ impl Logic {
         return false;
     }
 
-    fn has_moved(&mut self, index: usize) -> bool {
+    fn piece_type(&self, index: usize) -> usize {
+        if self.is_piece(index) {
+            if let Piece::Piece { piece_type, .. } = self.board[index] {
+                return piece_type;
+            }
+        }
+        return 200;
+    }
+
+    fn has_moved(&self, index: usize) -> bool {
         if let Piece::Piece { has_moved, .. } = self.board[index] {
             return has_moved;
         }
@@ -229,22 +275,24 @@ impl Logic {
         }
     }
 
-    pub fn get_valid_moves(&mut self) {
+    pub fn get_valid_moves(&mut self, mut index: usize) {
         self.valid_moves.clear();
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
+        if index == 100 {
+            if self.has_selected {
+                index = self.selected_index;
+            } else {
+                index = self.current_index;
+            }
         }
+
         let piece: Piece = self.board[index];
         match piece {
-            Piece::Piece { piece_type: 1, .. } => self.valid_moves_pawn(),
-            Piece::Piece { piece_type: 2, .. } => self.valid_moves_rook(),
-            Piece::Piece { piece_type: 3, .. } => self.valid_moves_knight(),
-            Piece::Piece { piece_type: 4, .. } => self.valid_moves_bishop(),
-            Piece::Piece { piece_type: 5, .. } => self.valid_moves_queen(),
-            Piece::Piece { piece_type: 6, .. } => self.valid_moves_king(),
+            Piece::Piece { piece_type: 1, .. } => self.valid_moves_pawn(index),
+            Piece::Piece { piece_type: 2, .. } => self.valid_moves_rook(index),
+            Piece::Piece { piece_type: 3, .. } => self.valid_moves_knight(index),
+            Piece::Piece { piece_type: 4, .. } => self.valid_moves_bishop(index),
+            Piece::Piece { piece_type: 5, .. } => self.valid_moves_queen(index),
+            Piece::Piece { piece_type: 6, .. } => self.valid_moves_king(index),
             Piece::Empty { .. } => return,
             _ => {
                 println!("error")
@@ -252,22 +300,16 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_pawn(&mut self) {
+    pub fn valid_moves_pawn(&mut self, index:usize) {
         let to: usize;
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
-        self.print_logic();
+
         if !self.has_moved(index) {
             to = 3;
         } else {
             to = 2;
         }
 
-        if self.whites_turn && self.is_white(index) {
+        if self.is_white(index) {
             for i in 1..to {
                 if (i * 8 + index) < 63 {
                     let is_piece: bool = self.is_piece(index + i * 8);
@@ -294,7 +336,7 @@ impl Logic {
                     self.valid_moves.push(index + 8 + 1);
                 }
             }
-        } else if !self.whites_turn && !self.is_white(index) {
+        } else if !self.is_white(index) {
             for i in 1..to {
                 if index > 7 {
                     let is_piece: bool = self.is_piece(index - i * 8);
@@ -323,13 +365,8 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_rook(&mut self) {
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
+    pub fn valid_moves_rook(&mut self, index:usize) {
+        
 
         let mut stop_north = false;
         let mut stop_west = false;
@@ -338,7 +375,7 @@ impl Logic {
         let row = index / 8;
 
         for i in 1..8 {
-            if self.whites_turn && self.is_white(index) {
+            if self.is_white(index) {
                 if !stop_north && (index + i * 8) < 64 {
                     let is_piece: bool = self.is_piece(index + i * 8);
                     let is_white: bool = self.is_white(index + i * 8);
@@ -387,7 +424,7 @@ impl Logic {
                         }
                     }
                 }
-            } else if !self.whites_turn && !self.is_white(index) {
+            } else if !self.is_white(index) {
                 if !stop_north && (index > i * 8) {
                     let is_piece: bool = self.is_piece(index - i * 8);
                     let is_white: bool = self.is_white(index - i * 8);
@@ -439,15 +476,9 @@ impl Logic {
             }
         }
     }
-    pub fn valid_moves_knight(&mut self) {
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
+    pub fn valid_moves_knight(&mut self, index:usize) {
 
-        if self.whites_turn && self.is_white(index) {
+        if self.is_white(index) {
             if (index + 15) < 64 && index % 8 != 0 {
                 let is_white: bool = self.is_white(index + 15);
 
@@ -511,7 +542,7 @@ impl Logic {
                     self.valid_moves.push(index - 6);
                 }
             }
-        } else if !self.whites_turn && !self.is_white(index) {
+        } else if !self.is_white(index) {
             if (index + 15) < 64 && index % 8 != 0 {
                 let is_white: bool = self.is_white(index + 15);
                 let is_piece: bool = self.is_piece(index + 15);
@@ -586,21 +617,15 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_bishop(&mut self) {
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
-
+    pub fn valid_moves_bishop(&mut self, index:usize) {
+        
         let mut stop_NE = false;
         let mut stop_NW = false;
         let mut stop_SE = false;
         let mut stop_SW = false;
 
         for i in 1..8 {
-            if self.whites_turn && self.is_white(index) {
+            if self.is_white(index) {
                 if (index + i * 7) > 63 || (index + i * 7) % 8 == 7 {
                     stop_NE = true;
                 }
@@ -661,7 +686,7 @@ impl Logic {
                         }
                     }
                 }
-            } else if !self.whites_turn && !self.is_white(index) {
+            } else if !self.is_white(index) {
                 if (index < i * 7) || (index - i * 7) % 8 == 0 {
                     stop_NE = true;
                 }
@@ -725,13 +750,7 @@ impl Logic {
             }
         }
     }
-    pub fn valid_moves_queen(&mut self) {
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
+    pub fn valid_moves_queen(&mut self, index:usize) {
 
         let mut stop_north = false;
         let mut stop_west = false;
@@ -746,7 +765,7 @@ impl Logic {
         let row = index / 8;
 
         for i in 1..8 {
-            if self.whites_turn && self.is_white(index) {
+            if self.is_white(index) {
                 //vertical & horisontal
                 if !stop_north && (index + i * 8) < 64 {
                     let is_piece: bool = self.is_piece(index + i * 8);
@@ -858,7 +877,7 @@ impl Logic {
                         }
                     }
                 }
-            } else if !self.whites_turn && !self.is_white(index) {
+            } else if !self.is_white(index) {
                 //vertical & horisontal
                 if !stop_north && (index > i * 8) {
                     let is_piece: bool = self.is_piece(index - i * 8);
@@ -974,18 +993,11 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_king(&mut self) {
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
-        }
-
+    pub fn valid_moves_king(&mut self, index:usize) {
+       
         let row = index / 8;
 
-       
-        if self.whites_turn && self.is_white(index) {
+        if self.is_white(index) {
             //vertical & horisontal
             if (index + 8) < 64 {
                 let is_piece: bool = self.is_piece(index + 8);
@@ -1045,7 +1057,7 @@ impl Logic {
                     self.valid_moves.push(index - 7);
                 }
             }
-        } else if !self.whites_turn && !self.is_white(index) {
+        } else if !self.is_white(index) {
             //vertical & horisontal
             if index > 8 {
                 let is_piece: bool = self.is_piece(index - 8);
@@ -1106,7 +1118,82 @@ impl Logic {
                 }
             }
         }
-        
+    }
+
+    fn find_checks(&mut self) {
+        self.all_white_moves.clear();
+        self.all_black_moves.clear();
+        for i in 0..64 {
+            if self.is_piece(i) {
+                self.get_valid_moves(i);
+                if !self.is_white(i) {
+                    
+                    self.all_black_moves.append(&mut self.valid_moves);
+                    
+                   
+                } else if self.is_white(i) {
+                    self.all_white_moves.append(&mut self.valid_moves);
+                   
+                }
+            }
+        }
+        println!("all black moves: {:?}", self.all_black_moves);
+        println!("white king position: {}", self.white_king_position);
+        if self.all_black_moves.contains(&self.white_king_position) {
+            self.white_in_check = true;
+        }else{
+            self.white_in_check = false;
+        }
+        println!("all white moves: {:?}", self.all_white_moves);
+        println!("black king position: {}", self.black_king_position);
+        if self.all_white_moves.contains(&self.black_king_position) {
+            self.black_in_check = true;
+        }else{
+            self.black_in_check = false;
+        }
+    }
+
+    fn clean_valid_moves(&mut self) {
+        if self.valid_moves.is_empty(){
+            return;
+        }
+        let index: usize;
+        if self.has_selected {
+            index = self.selected_index;
+        } else {
+            index = self.current_index;
+        }
+
+        if (self.is_piece(index) && self.is_white(index) && !self.whites_turn) || (self.is_piece(index) && !self.is_white(index) && self.whites_turn){
+            self.valid_moves.clear();
+        } 
+
+        let mut moves_to_remove: Vec<usize> = vec![];
+        for target_index in 0..self.valid_moves.len() {
+            self.temp_valid_moves = self.valid_moves.clone();
+            self.temp_board = self.board;
+            self.board[self.temp_valid_moves[target_index]] = self.board[index];
+            self.board[index] = Piece::Empty { position: (index) };
+            self.find_checks();
+            self.board = self.temp_board;
+            self.valid_moves = self.temp_valid_moves.clone();
+            if self.whites_turn && self.white_in_check {
+                moves_to_remove.push(self.valid_moves[target_index]);
+            } else if !self.whites_turn && self.black_in_check {
+                moves_to_remove.push(self.valid_moves[target_index]);
+            }
+        }
+        if self.piece_type(index) == 6{
+            if self.is_white(index){
+                moves_to_remove.append(&mut self.all_black_moves);
+            }else{
+                moves_to_remove.append(&mut self.all_white_moves)
+            }
+           
+        }
+        for val in 0..moves_to_remove.len() {
+            self.valid_moves.retain(|&x| x != moves_to_remove[val]);
+        }
     }
 }
 

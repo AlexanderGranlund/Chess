@@ -43,13 +43,17 @@ fn clear_terminal() {
 }
 
 pub fn print_board_in_terminal(logic: &Logic) {
-    clear_terminal();
+    //clear_terminal();
     let mut count = 0;
 
     // Create a single iterator and reverse it conditionally
     let board_iter: Box<dyn Iterator<Item = &Piece>> = if logic.whites_turn {
+        print_taken_pieces(true, logic);
+        println!("\n");
         Box::new(logic.board.iter().rev()) // Reverse for White's turn
     } else {
+        print_taken_pieces(false, logic);
+        println!("\n");
         Box::new(logic.board.iter()) // Normal order for Black's turn
     };
 
@@ -71,6 +75,15 @@ pub fn print_board_in_terminal(logic: &Logic) {
             }
         }
         count += 1;
+    }
+    //print_piece(position: usize, piece_index: usize, logic: &Logic)
+
+    if logic.whites_turn {
+        println!("");
+        print_taken_pieces(false, logic);
+    } else {
+        println!("");
+        print_taken_pieces(true, logic);
     }
 }
 
@@ -155,9 +168,47 @@ fn print_piece(position: usize, piece_index: usize, logic: &Logic) {
         print!("\x1b[44m {} \x1b[0m", chess_pieces[piece_index])
     } else if position == logic.current_index {
         print!("\x1b[41m {} \x1b[0m", chess_pieces[piece_index]);
+    } else if ((position == logic.white_king_position) && logic.white_in_check)
+        || ((position == logic.black_king_position) && logic.black_in_check)
+    {
+        print!("\x1b[45m {} \x1b[0m", chess_pieces[piece_index]);
     } else if logic.valid_moves.contains(&position) {
         print!("\x1b[43m {} \x1b[0m", chess_pieces[piece_index]);
     } else {
         print!(" {} ", chess_pieces[piece_index]);
+    }
+}
+
+fn print_taken_pieces(white_pieces: bool, logic: &Logic) {
+    if white_pieces {
+        println!("\n\n{} Taken white piece(s):", logic.taken_white_pieces_num);
+        for piece_type in logic.taken_white_pieces.iter() {
+            match piece_type {
+                1 => print!("{} ", chess_pieces[5]), //pawn
+                2 => print!("{} ", chess_pieces[2]), //rook
+                3 => print!("{} ", chess_pieces[4]), //knight
+                4 => print!("{} ", chess_pieces[3]), //bishop
+                5 => print!("{} ", chess_pieces[1]), //queen
+                6 => print!("{} ", chess_pieces[0]), //king
+                _ => {
+                    println!("error")
+                }
+            }
+        }
+    } else {
+        println!("\n\n{} Taken black piece(s):", logic.taken_black_pieces_num);
+        for piece_type in logic.taken_black_pieces.iter() {
+            match piece_type {
+                1 => print!("{} ", chess_pieces[11]),
+                2 => print!("{} ", chess_pieces[8]),
+                3 => print!("{} ", chess_pieces[10]),
+                4 => print!("{} ", chess_pieces[9]),
+                5 => print!("{} ", chess_pieces[7]),
+                6 => print!("{} ", chess_pieces[6]),
+                _ => {
+                    println!("error")
+                }
+            }
+        }
     }
 }

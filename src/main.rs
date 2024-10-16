@@ -13,13 +13,11 @@ mod piece;
 
 fn main() {
     let mut logic = Logic::new();
-    let mut count = 0;
+
     loop {
         //std::thread::sleep(std::time::Duration::from_secs(2));
 
         print_board_in_terminal(&logic);
-        count += 1;
-        println!("\ncount is: {}\n", count);
         print!("\n\nmoves: {}", logic.moves);
         let input_vec: Vec<String> = get_input();
         for input in input_vec {
