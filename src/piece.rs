@@ -2,21 +2,21 @@ use std::collections::HashMap;
 
 /*
 
-    Integer sets the move direction:
-        1, North (opposite opponent)
-        2, East
-        3, Diagonal North East
-        4, Diagonal South East 
-        5, North North East
-        6, North East East  
-        7, North North West 
-        8, South West West        
+   Integer sets the move direction:
+       1, North (opposite opponent)
+       2, East
+       3, Diagonal North East
+       4, Diagonal South East
+       5, North North East
+       6, North East East
+       7, North North West
+       8, South West West
 
- */
+*/
 
 pub fn get_core_moves() -> Vec<Vec<usize>> {
     let mut core_moves: Vec<Vec<usize>> = vec![];
-   
+
     //pawn
     let mut temp_pawn_vec: Vec<usize> = vec![];
     temp_pawn_vec.push(1);
@@ -65,16 +65,14 @@ pub fn get_core_moves() -> Vec<Vec<usize>> {
 
 #[derive(Copy, Clone)]
 pub enum Piece {
-    Piece{
+    Piece {
         piece_type: usize, //pawn = 1, rook = 2, knight = 3, bishop = 4, queen = 5, king = 6
         white: bool,
         position: usize,
         has_moved: bool,
     },
-    Empty{
+    Empty {
         position: usize,
     },
     Start,
 }
-
-
