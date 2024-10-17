@@ -74,7 +74,7 @@ impl Logic {
             self.current_index = 56;
             self.whites_turn = false;
         }
-       
+
         self.get_valid_moves(100);
         self.clean_valid_moves();
     }
@@ -300,7 +300,7 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_pawn(&mut self, index:usize) {
+    pub fn valid_moves_pawn(&mut self, index: usize) {
         let to: usize;
 
         if !self.has_moved(index) {
@@ -365,9 +365,7 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_rook(&mut self, index:usize) {
-        
-
+    pub fn valid_moves_rook(&mut self, index: usize) {
         let mut stop_north = false;
         let mut stop_west = false;
         let mut stop_east = false;
@@ -476,8 +474,7 @@ impl Logic {
             }
         }
     }
-    pub fn valid_moves_knight(&mut self, index:usize) {
-
+    pub fn valid_moves_knight(&mut self, index: usize) {
         if self.is_white(index) {
             if (index + 15) < 64 && index % 8 != 0 {
                 let is_white: bool = self.is_white(index + 15);
@@ -617,8 +614,7 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_bishop(&mut self, index:usize) {
-        
+    pub fn valid_moves_bishop(&mut self, index: usize) {
         let mut stop_NE = false;
         let mut stop_NW = false;
         let mut stop_SE = false;
@@ -750,8 +746,7 @@ impl Logic {
             }
         }
     }
-    pub fn valid_moves_queen(&mut self, index:usize) {
-
+    pub fn valid_moves_queen(&mut self, index: usize) {
         let mut stop_north = false;
         let mut stop_west = false;
         let mut stop_east = false;
@@ -993,8 +988,7 @@ impl Logic {
         }
     }
 
-    pub fn valid_moves_king(&mut self, index:usize) {
-       
+    pub fn valid_moves_king(&mut self, index: usize) {
         let row = index / 8;
 
         if self.is_white(index) {
@@ -1126,35 +1120,33 @@ impl Logic {
         for i in 0..64 {
             if self.is_piece(i) {
                 self.get_valid_moves(i);
-                if !self.is_white(i) {
-                    
+                if self.whites_turn && !self.is_white(i) {
                     self.all_black_moves.append(&mut self.valid_moves);
-                    
-                   
-                } else if self.is_white(i) {
+                } else if !self.whites_turn && self.is_white(i) {
                     self.all_white_moves.append(&mut self.valid_moves);
-                   
                 }
             }
         }
-        println!("all black moves: {:?}", self.all_black_moves);
-        println!("white king position: {}", self.white_king_position);
         if self.all_black_moves.contains(&self.white_king_position) {
             self.white_in_check = true;
-        }else{
+        } else {
             self.white_in_check = false;
         }
-        println!("all white moves: {:?}", self.all_white_moves);
-        println!("black king position: {}", self.black_king_position);
         if self.all_white_moves.contains(&self.black_king_position) {
             self.black_in_check = true;
-        }else{
+        } else {
             self.black_in_check = false;
         }
     }
 
     fn clean_valid_moves(&mut self) {
-        if self.valid_moves.is_empty(){
+        self.temp_valid_moves = self.valid_moves.clone();
+        self.temp_board = self.board;
+        self.find_checks();
+        self.board = self.temp_board;
+        self.valid_moves = self.temp_valid_moves.clone();
+
+        if self.valid_moves.is_empty() {
             return;
         }
         let index: usize;
@@ -1164,33 +1156,45 @@ impl Logic {
             index = self.current_index;
         }
 
-        if (self.is_piece(index) && self.is_white(index) && !self.whites_turn) || (self.is_piece(index) && !self.is_white(index) && self.whites_turn){
+        if (self.is_piece(index) && self.is_white(index) && !self.whites_turn)
+            || (self.is_piece(index) && !self.is_white(index) && self.whites_turn)
+        {
             self.valid_moves.clear();
-        } 
+        }
 
         let mut moves_to_remove: Vec<usize> = vec![];
-        for target_index in 0..self.valid_moves.len() {
+
+        if self.piece_type(index) == 6 {
+            if self.is_white(index) {
+                moves_to_remove.append(&mut self.all_black_moves);
+            } else {
+                moves_to_remove.append(&mut self.all_white_moves);
+            }
+        } else {
+            for target_index in 0..self.valid_moves.len() {
+                self.white_in_check = false;
+                self.black_in_check = false;
+                self.temp_valid_moves = self.valid_moves.clone();
+                self.temp_board = self.board;
+                self.board[self.temp_valid_moves[target_index]] = self.board[index];
+                self.board[index] = Piece::Empty { position: (index) };
+                self.find_checks();
+                self.board = self.temp_board;
+                self.valid_moves = self.temp_valid_moves.clone();
+                if self.whites_turn && self.white_in_check {
+                    moves_to_remove.push(self.valid_moves[target_index]);
+                } else if !self.whites_turn && self.black_in_check {
+                    moves_to_remove.push(self.valid_moves[target_index]);
+                }
+            }
+
             self.temp_valid_moves = self.valid_moves.clone();
             self.temp_board = self.board;
-            self.board[self.temp_valid_moves[target_index]] = self.board[index];
-            self.board[index] = Piece::Empty { position: (index) };
             self.find_checks();
             self.board = self.temp_board;
             self.valid_moves = self.temp_valid_moves.clone();
-            if self.whites_turn && self.white_in_check {
-                moves_to_remove.push(self.valid_moves[target_index]);
-            } else if !self.whites_turn && self.black_in_check {
-                moves_to_remove.push(self.valid_moves[target_index]);
-            }
         }
-        if self.piece_type(index) == 6{
-            if self.is_white(index){
-                moves_to_remove.append(&mut self.all_black_moves);
-            }else{
-                moves_to_remove.append(&mut self.all_white_moves)
-            }
-           
-        }
+
         for val in 0..moves_to_remove.len() {
             self.valid_moves.retain(|&x| x != moves_to_remove[val]);
         }

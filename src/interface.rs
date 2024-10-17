@@ -43,7 +43,7 @@ fn clear_terminal() {
 }
 
 pub fn print_board_in_terminal(logic: &Logic) {
-    //clear_terminal();
+    clear_terminal();
     let mut count = 0;
 
     // Create a single iterator and reverse it conditionally
