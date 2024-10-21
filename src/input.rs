@@ -19,7 +19,7 @@ pub fn get_input() -> Vec<String> {
     let mut input_vec: Vec<String> = input_vec_str.iter().map(|&s| s.to_string()).collect();
     //println!("You entered: {}", input);
     remove_empty_strings(&mut input_vec);
-    println!("input vector: {:?}", input_vec);
+    //println!("input vector: {:?}", input_vec);
     return input_vec;
 }
 
@@ -32,9 +32,13 @@ pub fn match_input(input: String) -> usize {
         "d" => 3,
         "s" => 4,
         "e" => 5,
-        "q" => 6,
+        "r" => 6,
         "z" => 7,
         "x" => 8,
+        "1" => 9,
+        "2" => 10,
+        "3" => 11,
+        "4" => 12,
         _ => 200,
     };
 

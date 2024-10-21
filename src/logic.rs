@@ -1,15 +1,15 @@
-use std::io::empty;
-use std::ptr::null;
 
-use crate::piece;
-use crate::piece::get_core_moves;
+
 use crate::piece::Piece;
+use crate::interface::print_promotion_choices;
+use crate::interface::clear_terminal;
+use crate::input::get_input;
+use crate::input::match_input;
 
-//use std::collections::HashMap;
+//skolmatt
+//ddddwewwedddwewwedddddeaaawwweddedddwwwedddeddwweddddddewwae
 
 pub struct Logic {
-    height: usize,
-    width: usize,
     pub moves: usize,
     pub board: [Piece; 64],
     pub temp_board: [Piece; 64],
@@ -19,8 +19,6 @@ pub struct Logic {
     pub all_black_moves: Vec<usize>,
     pub taken_white_pieces_num: usize,
     pub taken_black_pieces_num: usize,
-    current_move: [usize; 2],
-    pub core_moves: Vec<Vec<usize>>,
     pub whites_turn: bool,
     pub current_index: usize,
     pub has_selected: bool,
@@ -31,13 +29,12 @@ pub struct Logic {
     pub black_king_position: usize,
     pub white_in_check: bool,
     pub black_in_check: bool,
+    pub game_state: usize,
 }
 
 impl Logic {
     pub fn new() -> Logic {
         Logic {
-            height: 8,
-            width: 8,
             moves: 0,
             board: create_starting_board(),
             temp_board: create_starting_board(),
@@ -47,8 +44,6 @@ impl Logic {
             all_black_moves: vec![],
             taken_white_pieces_num: 0,
             taken_black_pieces_num: 0,
-            current_move: [0; 2],
-            core_moves: get_core_moves(),
             whites_turn: true,
             current_index: 7,
             has_selected: false,
@@ -59,6 +54,7 @@ impl Logic {
             black_king_position: 59,
             white_in_check: false,
             black_in_check: false,
+            game_state: 0,
         }
     }
     pub fn increment_moves(&mut self) {
@@ -74,16 +70,85 @@ impl Logic {
             self.current_index = 56;
             self.whites_turn = false;
         }
-
         self.get_valid_moves(100);
-        self.clean_valid_moves();
+        self.clean_valid_moves(100);
+        self.check_if_mate();
     }
 
-    pub fn view_core_moves(moves: &Vec<Vec<usize>>) {
-        println!("\n");
-        for vec in moves {
-            println!("{:?}", vec);
+    fn reset_game(&mut self){
+        self.moves = 0;
+        self.board= create_starting_board();
+        self.temp_board= create_starting_board();
+        self.taken_white_pieces= vec![];
+        self.taken_black_pieces= vec![];
+        self.all_white_moves= vec![];
+        self.all_black_moves= vec![];
+        self.taken_white_pieces_num= 0;
+        self.taken_black_pieces_num= 0;
+        self.whites_turn= true;
+        self.current_index= 7;
+        self.has_selected= false;
+        self.selected_index= 100;
+        self.valid_moves= vec![];
+        self.temp_valid_moves= vec![];
+        self.white_king_position= 3;
+        self.black_king_position= 59;
+        self.white_in_check= false;
+        self.black_in_check= false;
+        self.game_state= 0;
+    }
+
+    pub fn check_if_mate(&mut self){
+
+        self.temp_valid_moves = self.valid_moves.clone();
+        self.find_checks();
+        self.valid_moves = self.temp_valid_moves.clone();
+
+        let mut all_white: Vec<usize> = vec![];
+        let mut all_black: Vec<usize> = vec![];
+
+        
+        for i in 0..64{
+            if self.is_piece(i){
+                self.get_valid_moves(i);
+                self.clean_valid_moves(i);
+                if self.whites_turn && self.is_white(i){
+                    all_white.append(&mut self.valid_moves);
+                }
+                else if !self.whites_turn && !self.is_white(i){
+                    all_black.append(&mut self.valid_moves);
+                }
+            }
+            
+
+           
         }
+
+        if self.whites_turn && self.all_white_moves.is_empty() && self.white_in_check{
+
+            //black won, white is mated
+            self.game_state = 1;
+        }
+        else if self.whites_turn && all_white.is_empty() && !self.white_in_check{
+
+            //draw, stalemate
+            self.game_state = 2;
+        }
+        else if !self.whites_turn && all_black.is_empty() && self.black_in_check{
+
+            //white won, black is mated
+            self.game_state = 3;
+        }
+        else if !self.whites_turn && all_black.is_empty() && !self.black_in_check{
+
+            //draw, stalemate
+            self.game_state = 4;
+        }
+        
+        self.get_valid_moves(100);
+        self.clean_valid_moves(100);
+       
+     
     }
 
     fn print_logic(&self) {
@@ -117,7 +182,7 @@ impl Logic {
                 }
                 //backward
                 4 => {
-                    if (self.current_index >= 8) {
+                    if self.current_index >= 8 {
                         self.current_index -= 8;
                     }
                 }
@@ -145,16 +210,16 @@ impl Logic {
                 }
                 //forward
                 1 => {
-                    if (self.current_index >= 8) {
+                    if self.current_index >= 8 {
                         self.current_index -= 8;
                     }
                 }
                 _ => println!("direction is: {}", direction),
             }
         }
-
+        //self.check_if_mate();
         self.get_valid_moves(100);
-        self.clean_valid_moves();
+        self.clean_valid_moves(100);
     }
 
     fn select_and_lock(&mut self) {
@@ -179,11 +244,21 @@ impl Logic {
                     }
                 }
 
+                //if piece type is king
                 if self.piece_type(self.selected_index) == 6 {
                     if self.is_white(self.selected_index) {
                         self.white_king_position = self.current_index;
                     } else {
                         self.black_king_position = self.current_index;
+                    }
+                }
+
+                //if piece type is pawn
+                if self.piece_type(self.selected_index) == 1 {
+                    if self.is_white(self.selected_index) && self.selected_index / 8 == 6{
+                        self.promotion();
+                    } else if !self.is_white(self.selected_index) && self.selected_index / 8 == 1 {
+                        self.promotion();
                     }
                 }
 
@@ -211,10 +286,89 @@ impl Logic {
         {
             self.selected_index = self.current_index;
             self.has_selected = true;
+            //self.check_if_mate();
             self.get_valid_moves(100);
-            self.clean_valid_moves();
+            self.clean_valid_moves(100);
         }
     }
+
+    fn promotion(&mut self){
+        print_promotion_choices(self.is_white(self.selected_index));
+        let promotion_choice:Vec<String> = get_input();
+        let mut action:usize = 100;
+
+        if!promotion_choice.is_empty(){
+            for input in &promotion_choice {
+                action = match_input(input.to_string());
+                if action > 8 && action < 13{
+                    break;
+                } 
+            }
+        } 
+
+        let mut not_found:bool = true;
+
+        while promotion_choice.is_empty() && not_found{
+            clear_terminal();
+            let mut promotion_choice:Vec<String> = get_input();
+            
+            if!promotion_choice.is_empty(){
+                for input in &promotion_choice {
+                    action = match_input(input.to_string());
+                    if action > 8 && action < 13{
+                        not_found = false;
+                        break;
+                    } 
+                }
+            } 
+            else{
+                println!("please enter:\n 9 => Queen\n10 => Knight\n11 => Rook\n12 => Bishop\n")
+            }
+            promotion_choice.clear();
+        }
+
+        match action{
+            //queen
+            9 => {
+                if self.whites_turn{
+                    self.board[self.selected_index] = Piece::Piece { piece_type: (5), white: (true), position: (self.selected_index), has_moved: (true) }
+                }
+               else{
+                self.board[self.selected_index] = Piece::Piece { piece_type: (5), white: (false), position: (self.selected_index), has_moved: (true) }
+               }
+            }
+            //knight
+            10 => {
+                if self.whites_turn{
+                    self.board[self.selected_index] = Piece::Piece { piece_type: (3), white: (true), position: (self.selected_index), has_moved: (true) }
+                }
+               else{
+                self.board[self.selected_index] = Piece::Piece { piece_type: (3), white: (false), position: (self.selected_index), has_moved: (true) }
+               }
+            }
+            //rook
+            11 => {
+                if self.whites_turn{
+                    self.board[self.selected_index] = Piece::Piece { piece_type: (2), white: (true), position: (self.selected_index), has_moved: (true) }
+                }
+               else{
+                self.board[self.selected_index] = Piece::Piece { piece_type: (2), white: (false), position: (self.selected_index), has_moved: (true) }
+               }
+            }
+            //bishop
+            12 => {
+                if self.whites_turn{
+                    self.board[self.selected_index] = Piece::Piece { piece_type: (4), white: (true), position: (self.selected_index), has_moved: (true) }
+                }
+               else{
+                self.board[self.selected_index] = Piece::Piece { piece_type: (4), white: (false), position: (self.selected_index), has_moved: (true) }
+               }
+            }
+            _ => print!("error matching promotion"),
+        }
+
+    }
+
 
     fn is_piece(&self, index: usize) -> bool {
         let is_piece = match self.board[index] {
@@ -268,7 +422,7 @@ impl Logic {
             3 => self.select_new_piece(3), //d
             4 => self.select_new_piece(4), //s
             5 => self.select_and_lock(),   //e
-            6 => println!("{} <- this is the action", action),
+            6 => self.reset_game(),
             7 => println!("{} <- this is the action", action),
             8 => println!("{} <- this is the action", action),
             _ => println!("action is: {}", action),
@@ -316,20 +470,18 @@ impl Logic {
                     if is_piece {
                         break;
                     } else {
-                        //check if in check first!!
-
                         self.valid_moves.push(index + i * 8);
                     }
                 }
             }
-            if !(index % 8 == 0) {
+            if !(index % 8 == 0 || index / 8 > 6) {
                 let is_piece_dia_right: bool = self.is_piece(index + 8 - 1);
                 let is_white_dia_right: bool = self.is_white(index + 8 - 1);
                 if is_piece_dia_right && !is_white_dia_right {
                     self.valid_moves.push(index + 8 - 1);
                 }
             }
-            if !(index + 1 % 8 == 0) {
+            if !(index + 1 % 8 == 0 || index / 8 > 6) {
                 let is_piece_dia_left: bool = self.is_piece(index + 8 + 1);
                 let is_white_dia_left: bool = self.is_white(index + 8 + 1);
                 if is_piece_dia_left && !is_white_dia_left {
@@ -343,19 +495,18 @@ impl Logic {
                     if is_piece {
                         break;
                     } else {
-                        //check if in check first!!
                         self.valid_moves.push(index - i * 8);
                     }
                 }
             }
-            if !((index + 1) % 8 == 0) {
+            if !((index + 1) % 8 == 0 || index / 8 < 1) {
                 let is_piece_dia_right: bool = self.is_piece(index - 8 + 1);
                 let is_white_dia_right: bool = self.is_white(index - 8 + 1);
                 if is_piece_dia_right && is_white_dia_right {
                     self.valid_moves.push(index - 8 + 1);
                 }
             }
-            if !(index % 8 == 0) {
+            if !(index % 8 == 0 || index / 8 < 1) {
                 let is_piece_dia_left: bool = self.is_piece(index - 8 - 1);
                 let is_white_dia_left: bool = self.is_white(index - 8 - 1);
                 if is_piece_dia_left && is_white_dia_left {
@@ -1139,7 +1290,7 @@ impl Logic {
         }
     }
 
-    fn clean_valid_moves(&mut self) {
+    fn clean_valid_moves(&mut self, mut index:usize) {
         self.temp_valid_moves = self.valid_moves.clone();
         self.temp_board = self.board;
         self.find_checks();
@@ -1149,11 +1300,12 @@ impl Logic {
         if self.valid_moves.is_empty() {
             return;
         }
-        let index: usize;
-        if self.has_selected {
-            index = self.selected_index;
-        } else {
-            index = self.current_index;
+        if index == 100 {
+            if self.has_selected {
+                index = self.selected_index;
+            } else {
+                index = self.current_index;
+            }
         }
 
         if (self.is_piece(index) && self.is_white(index) && !self.whites_turn)
@@ -1169,8 +1321,40 @@ impl Logic {
                 moves_to_remove.append(&mut self.all_black_moves);
             } else {
                 moves_to_remove.append(&mut self.all_white_moves);
+            } 
+            for target_index in 0..self.valid_moves.len(){
+                if self.is_piece(self.valid_moves[target_index]){
+                    self.white_in_check = false;
+                    self.black_in_check = false;
+                    self.temp_valid_moves = self.valid_moves.clone();
+                    self.temp_board = self.board;
+                    if self.whites_turn{
+                        self.white_king_position = self.temp_valid_moves[target_index];
+                    }
+                    else{
+                        self.black_king_position = self.temp_valid_moves[target_index];
+                    }
+                    self.board[self.temp_valid_moves[target_index]] = self.board[index];
+                    self.board[index] = Piece::Empty { position: (index) };
+                    self.find_checks();
+                    self.board = self.temp_board;
+                    self.valid_moves = self.temp_valid_moves.clone();
+                    if self.whites_turn{
+                        self.white_king_position = index;
+                    }
+                    else{
+                        self.black_king_position = index;
+                    }
+                    if self.whites_turn && self.white_in_check {
+                        moves_to_remove.push(self.valid_moves[target_index]);
+                    } else if !self.whites_turn && self.black_in_check {
+                        moves_to_remove.push(self.valid_moves[target_index]);
+                    }
+            
+                }
+                
             }
-        } else {
+        }else{
             for target_index in 0..self.valid_moves.len() {
                 self.white_in_check = false;
                 self.black_in_check = false;
@@ -1187,13 +1371,15 @@ impl Logic {
                     moves_to_remove.push(self.valid_moves[target_index]);
                 }
             }
-
-            self.temp_valid_moves = self.valid_moves.clone();
-            self.temp_board = self.board;
-            self.find_checks();
-            self.board = self.temp_board;
-            self.valid_moves = self.temp_valid_moves.clone();
         }
+
+
+        self.temp_valid_moves = self.valid_moves.clone();
+        self.temp_board = self.board;
+        self.find_checks();
+        self.board = self.temp_board;
+        self.valid_moves = self.temp_valid_moves.clone();
+    
 
         for val in 0..moves_to_remove.len() {
             self.valid_moves.retain(|&x| x != moves_to_remove[val]);
@@ -1342,3 +1528,4 @@ fn create_starting_board() -> [Piece; 64] {
 
     return board;
 }
+

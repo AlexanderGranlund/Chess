@@ -36,7 +36,7 @@ fn clear_terminal() {
 }
  */
 
-fn clear_terminal() {
+pub fn clear_terminal() {
     let _ = Command::new("clear").status(); // For Unix-based systems
                                             // For Windows, use:
                                             // let _ = Command::new("cmd").args(&["/C", "cls"]).status();
@@ -44,6 +44,7 @@ fn clear_terminal() {
 
 pub fn print_board_in_terminal(logic: &Logic) {
     clear_terminal();
+    println!("\n\nMoves: {}", logic.moves);
     let mut count = 0;
 
     // Create a single iterator and reverse it conditionally
@@ -159,6 +160,7 @@ pub fn print_piece_prep(piece: Piece, type_of_piece: usize, logic: &Logic) {
 }
 
 fn print_piece(position: usize, piece_index: usize, logic: &Logic) {
+    //println!("from interface valid moves: {:?}", logic.valid_moves);
     if position == logic.current_index
         && logic.has_selected
         && logic.current_index != logic.selected_index
@@ -211,4 +213,15 @@ fn print_taken_pieces(white_pieces: bool, logic: &Logic) {
             }
         }
     }
+}
+
+pub fn print_promotion_choices(white: bool){
+    println!("Please choose piece to promote to.");
+    if white{                                   //queen             knight             rook             bishop 
+        println!("1: {}, 2: {}, 3: {}, 4: {},", chess_pieces[1], chess_pieces[4], chess_pieces[2], chess_pieces[3]);
+    }
+    else{
+        println!("1: {}, 2: {}, 3: {}, 4: {},", chess_pieces[7], chess_pieces[10], chess_pieces[8], chess_pieces[9]);
+    }
+   
 }

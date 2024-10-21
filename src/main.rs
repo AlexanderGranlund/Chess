@@ -1,4 +1,3 @@
-//use input::get_input;
 
 use input::{get_input, match_input};
 
@@ -15,15 +14,36 @@ fn main() {
     let mut logic = Logic::new();
 
     loop {
-        //std::thread::sleep(std::time::Duration::from_secs(2));
-
         print_board_in_terminal(&logic);
-        print!("\n\nmoves: {}", logic.moves);
-        let input_vec: Vec<String> = get_input();
-        for input in input_vec {
-            logic.do_action(match_input(input));
+        if logic.game_state > 0{
+            match logic.game_state{
+                1 => {
+                    println!("\n###        Game Over        ###\n### Black Won by Checkmate  ###");
+                }
+                2 => {
+                    println!("\n###        Game Over        ###\n###    Draw by Stalemate    ###");
+                }
+                3 => {
+                    println!("\n###        Game Over        ###\n### White Won by Check Mate ###");
+                }
+                4 => {
+                    println!("\n###        Game Over        ###\n###    Draw by Stalemate   ###");
+                }
+                _ => {} 
+            }
+            let input_vec: Vec<String> = get_input();
+            for input in input_vec {
+                logic.do_action(match_input(input));
+            }
         }
-        //println!("index enter: {}", logic.current_index);
-        //do_action(&mut self, piece: Piece,  action: usize)
+        else{
+            let input_vec: Vec<String> = get_input();
+            for input in input_vec {
+                logic.do_action(match_input(input));
+            }
+        }
+
     }
+
+
 }
