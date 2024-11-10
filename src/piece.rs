@@ -1,5 +1,3 @@
-
-
 #[derive(Copy, Clone)]
 pub enum Piece {
     Piece {

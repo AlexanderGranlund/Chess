@@ -215,13 +215,18 @@ fn print_taken_pieces(white_pieces: bool, logic: &Logic) {
     }
 }
 
-pub fn print_promotion_choices(white: bool){
+pub fn print_promotion_choices(white: bool) {
     println!("Please choose piece to promote to.");
-    if white{                                   //queen             knight             rook             bishop 
-        println!("1: {}, 2: {}, 3: {}, 4: {},", chess_pieces[1], chess_pieces[4], chess_pieces[2], chess_pieces[3]);
+    if white {
+        //queen             knight             rook             bishop
+        println!(
+            "1: {}, 2: {}, 3: {}, 4: {},",
+            chess_pieces[1], chess_pieces[4], chess_pieces[2], chess_pieces[3]
+        );
+    } else {
+        println!(
+            "1: {}, 2: {}, 3: {}, 4: {},",
+            chess_pieces[7], chess_pieces[10], chess_pieces[8], chess_pieces[9]
+        );
     }
-    else{
-        println!("1: {}, 2: {}, 3: {}, 4: {},", chess_pieces[7], chess_pieces[10], chess_pieces[8], chess_pieces[9]);
-    }
-   
 }

@@ -1,4 +1,3 @@
-
 use input::{get_input, match_input};
 
 pub use crate::interface::print_board_in_terminal;
@@ -15,8 +14,8 @@ fn main() {
 
     loop {
         print_board_in_terminal(&logic);
-        if logic.game_state > 0{
-            match logic.game_state{
+        if logic.game_state > 0 {
+            match logic.game_state {
                 1 => {
                     println!("\n###        Game Over        ###\n### Black Won by Checkmate  ###");
                 }
@@ -29,21 +28,17 @@ fn main() {
                 4 => {
                     println!("\n###        Game Over        ###\n###    Draw by Stalemate   ###");
                 }
-                _ => {} 
+                _ => {}
             }
             let input_vec: Vec<String> = get_input();
             for input in input_vec {
                 logic.do_action(match_input(input));
             }
-        }
-        else{
+        } else {
             let input_vec: Vec<String> = get_input();
             for input in input_vec {
                 logic.do_action(match_input(input));
             }
         }
-
     }
-
-
 }

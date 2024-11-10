@@ -8,8 +8,8 @@ fn remove_empty_strings(vec: &mut Vec<String>) {
 }
 
 pub fn get_input() -> Vec<String> {
-    //println!("\nPlease enter some input:");
     println!("\n");
+
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
