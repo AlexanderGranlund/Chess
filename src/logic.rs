@@ -39,6 +39,7 @@ pub struct Logic {
     pub white_in_check: bool,
     pub black_in_check: bool,
     pub game_state: usize,
+    pub last_move: Vec<usize>
 }
 
 impl Logic {
@@ -64,6 +65,7 @@ impl Logic {
             white_in_check: false,
             black_in_check: false,
             game_state: 0,
+            last_move: vec![],
         }
     }
     pub fn increment_moves(&mut self) {
@@ -105,6 +107,7 @@ impl Logic {
         self.white_in_check = false;
         self.black_in_check = false;
         self.game_state = 0;
+        self.last_move = vec![];
     }
 
     pub fn check_if_mate(&mut self) {
@@ -224,27 +227,40 @@ impl Logic {
                 return;
             }
             if self.valid_moves.contains(&self.current_index) {
-                if self.is_piece(self.current_index) {
-                    if self.is_white(self.current_index) {
-                        self.taken_white_pieces_num += 1;
-                        self.taken_white_pieces
-                            .push(self.piece_type(self.current_index));
-                        self.taken_white_pieces.sort();
-                    } else {
-                        self.taken_black_pieces_num += 1;
-                        self.taken_black_pieces
-                            .push(self.piece_type(self.current_index));
-                        self.taken_black_pieces.sort();
-                    }
-                }
+                
+                self.check_and_increment_taken_pieces(self.current_index);
 
                 //if piece type is pawn
                 if self.piece_type(self.selected_index) == 1 {
-                    if self.is_white(self.selected_index) && self.selected_index / 8 == 6 {
-                        self.promotion();
-                    } else if !self.is_white(self.selected_index) && self.selected_index / 8 == 1 {
-                        self.promotion();
+                    if self.is_white(self.selected_index){
+                        if  self.selected_index / 8 == 6{
+                            self.promotion();
+                        } else if self.selected_index / 8 == 4{
+                            if self.current_index == self.selected_index + 9 || self.current_index == self.selected_index + 7{
+                                self.check_and_increment_taken_pieces(self.last_move[1]);
+                                self.board[self.last_move[1]] = Piece::Empty {
+                                    position: self.last_move[1],
+                                };
+                            }
+                        }
+                    } else {
+                        if  self.selected_index / 8 == 1{
+                            self.promotion();
+                        } else if self.selected_index / 8 == 3{
+                            if self.current_index == self.selected_index - 9 || self.current_index == self.selected_index - 7{
+                                self.check_and_increment_taken_pieces(self.last_move[1]);
+                                self.board[self.last_move[1]] = Piece::Empty {
+                                    position: self.last_move[1],
+                                };
+                                
+                            }
+                        }
+
+                       
                     }
+
+                    
+
                 }
 
 
@@ -325,6 +341,28 @@ impl Logic {
         self.board[self.selected_index] = Piece::Empty {
             position: self.selected_index,
         };
+        self.last_move.clear();
+        //from 
+        self.last_move.push(self.selected_index);
+        //to
+        self.last_move.push(self.current_index);
+    }
+
+    fn check_and_increment_taken_pieces(&mut self, index:usize){
+        print!("index is: {}",index);
+        if self.is_piece(index) {
+            if self.is_white(index) {
+                self.taken_white_pieces_num += 1;
+                self.taken_white_pieces
+                    .push(self.piece_type(index));
+                self.taken_white_pieces.sort();
+            } else {
+                self.taken_black_pieces_num += 1;
+                self.taken_black_pieces
+                    .push(self.piece_type(index));
+                self.taken_black_pieces.sort();
+            }
+        }
     }
 
     fn promotion(&mut self) {
@@ -555,6 +593,19 @@ impl Logic {
                     self.valid_moves.push(index + 8 + 1);
                 }
             }
+            
+            if index / 8 == 4 {
+                if self.last_move.len() == 2{
+                    if self.piece_type(self.last_move[1]) == 1 && !self.is_white(self.last_move[1]) && self.last_move[0]/8 - self.last_move[1]/8 > 1 {
+                        if !self.is_piece(self.last_move[1] + 8){
+                            self.valid_moves.push(self.last_move[1] + 8);
+                        }  
+                    }
+                }
+                
+            }
+            
+
         } else if !self.is_white(index) {
             for i in 1..to {
                 if index > 7 {
@@ -580,7 +631,19 @@ impl Logic {
                     self.valid_moves.push(index - 8 - 1);
                 }
             }
+            
+            if index / 8 == 3 {
+                if self.last_move.len() == 2{
+                    if self.piece_type(self.last_move[1]) == 1 && self.is_white(self.last_move[1]) && self.last_move[1]/8 - self.last_move[0]/8 > 1 {
+                        if !self.is_piece(self.last_move[1] - 8){
+                            self.valid_moves.push(self.last_move[1] - 8);
+                        }  
+                    }
+                }
+            }
+            
         }
+        
     }
 
     pub fn valid_moves_rook(&mut self, index: usize) {

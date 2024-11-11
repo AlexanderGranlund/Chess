@@ -43,7 +43,7 @@ pub fn clear_terminal() {
 }
 
 pub fn print_board_in_terminal(logic: &Logic) {
-    clear_terminal();
+    //clear_terminal();
     println!("\n\nMoves: {}", logic.moves);
     let mut count = 0;
 
