@@ -43,20 +43,35 @@ pub fn clear_terminal() {
 }
 
 pub fn print_board_in_terminal(logic: &Logic) {
-    //clear_terminal();
+    clear_terminal();
     println!("\n\nMoves: {}", logic.moves);
     let mut count = 0;
 
-    // Create a single iterator and reverse it conditionally
-    let board_iter: Box<dyn Iterator<Item = &Piece>> = if logic.whites_turn {
-        print_taken_pieces(true, logic);
-        println!("\n");
-        Box::new(logic.board.iter().rev()) // Reverse for White's turn
+    let board_iter: Box<dyn Iterator<Item = &Piece>>;
+
+    if logic.auto_flip_board {
+        // Create a single iterator and reverse it conditionally
+        board_iter = if logic.whites_turn {
+            print_taken_pieces(true, logic);
+            println!("\n");
+            Box::new(logic.board.iter().rev()) // Reverse for White's turn
+        } else {
+            print_taken_pieces(false, logic);
+            println!("\n");
+            Box::new(logic.board.iter()) // Normal order for Black's turn
+        };
     } else {
-        print_taken_pieces(false, logic);
-        println!("\n");
-        Box::new(logic.board.iter()) // Normal order for Black's turn
-    };
+        // Create a single iterator and reverse it conditionally
+        board_iter = if logic.flip_board {
+            print_taken_pieces(true, logic);
+            println!("\n");
+            Box::new(logic.board.iter().rev()) // Reverse for White's turn
+        } else {
+            print_taken_pieces(false, logic);
+            println!("\n");
+            Box::new(logic.board.iter()) // Normal order for Black's turn
+        };
+    }
 
     for piece in board_iter {
         if count % 8 == 0 {
